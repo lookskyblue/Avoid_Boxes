@@ -11,7 +11,7 @@
 #define CHAR_SPEED 10
 #define STAR_X_LEN 5
 #define STAR_Y_LEN 80
-#define MAX_STAR 15
+#define MAX_STAR 50
 #define STAR_SPEED 10
 #define BOARD_OFFSET_X 100
 #define BOARD_OFFSET_Y 100
@@ -87,15 +87,12 @@ std::chrono::system_clock::time_point StartTime;
 std::chrono::system_clock::time_point EndTime;
 std::chrono::seconds sec;
 TCHAR ElapsedTime[20];
-RECT rt = { BOARD_OFFSET_X, BOARD_OFFSET_Y - 20, BOARD_OFFSET_X + BOARD_X_LEN, BOARD_OFFSET_Y + BOARD_Y_LEN };
+RECT rt = { BOARD_OFFSET_X, BOARD_OFFSET_Y, BOARD_OFFSET_X + BOARD_X_LEN, BOARD_OFFSET_Y + BOARD_Y_LEN +15 };
 
 void OnCreate(HWND hWnd)
 {
 	avatar = new Character(BOARD_X_LEN / 2 + BOARD_OFFSET_X, BOARD_Y_LEN + BOARD_OFFSET_Y - 20, CHAR_SPEED);
 	stars.reserve(MAX_STAR);
-
-	for (int i = 0; i < MAX_STAR; i++)
-		stars.push_back(Star(BOARD_OFFSET_X + rand() % (BOARD_X_LEN), 0 + BOARD_OFFSET_Y, STAR_SPEED));
 
 	SetTimer(hWnd, 0, 100, NULL);
 	srand(time_t(NULL));
@@ -114,17 +111,21 @@ void OnPaint(HDC hdc)
 	Rectangle(hdc, BOARD_OFFSET_X, BOARD_OFFSET_Y, BOARD_OFFSET_X + BOARD_X_LEN, BOARD_OFFSET_Y + BOARD_Y_LEN);
 	Ellipse(hdc, avatarX, avatarY, avatarX + CHAR_X_LEN, avatarY + CHAR_Y_LEN);
 
-	wsprintf(ElapsedTime, L"Elapsed Time: %d", sec.count()); // sec.count ��ȯ���� int64 ������ ��� �ڷ����� ���..? ld, lld�� �ȵ�..
-	TextOut(hdc, BOARD_OFFSET_X + 100, BOARD_OFFSET_Y - 20, ElapsedTime, lstrlen(ElapsedTime));
+	wsprintf(ElapsedTime, L"Elapsed Time: %d", sec.count()); // What's the int64 data type..
+	TextOut(hdc, BOARD_OFFSET_X + 100, BOARD_OFFSET_Y + BOARD_Y_LEN, ElapsedTime, lstrlen(ElapsedTime));
 
-	for (int i = 0; i < MAX_STAR; i++)
+	for (int i = 0; i < stars.size(); i++)
 	{
 		if (stars[i].GetLife())
 		{
 			int x = stars[i].GetX();
 			int y = stars[i].GetY();
 
-			Rectangle(hdc, x, y, x + STAR_X_LEN, y + STAR_Y_LEN);
+			if (y + STAR_Y_LEN >= BOARD_OFFSET_Y + BOARD_Y_LEN)
+				Rectangle(hdc, x, y, x + STAR_X_LEN, BOARD_OFFSET_Y + BOARD_Y_LEN);
+
+			else
+				Rectangle(hdc, x, y, x + STAR_X_LEN, y + STAR_Y_LEN);
 		}
 	}
 }
@@ -179,7 +180,7 @@ void Collision(HWND hWnd)
 	int avatarX = avatar->GetX();
 	int avatarY = avatar->GetY();
 
-	for (int i = 0; i < MAX_STAR; i++)
+	for (int i = 0; i < stars.size(); i++)
 	{
 		if (stars[i].GetLife())
 		{
@@ -215,20 +216,32 @@ void Collision(HWND hWnd)
 
 void MakeStar()
 {
-	for (int i = 0; i < MAX_STAR; i++)
+	if (stars.size() < MAX_STAR)
 	{
-		if (stars[i].GetLife() == false)
+		stars.push_back(Star(BOARD_OFFSET_X + rand() % (BOARD_X_LEN), 0 + BOARD_OFFSET_Y, STAR_SPEED));
+		
+		return;
+	}
+
+	else
+	{
+		for (int i = 0; i < stars.size(); i++)
 		{
-			stars[i].SetAll(rand() % 250 + BOARD_OFFSET_X, 0 + BOARD_OFFSET_Y, STAR_SPEED, true);
+			if (stars[i].GetLife() == false)
+			{
+				stars[i].SetAll(BOARD_OFFSET_X + rand() % (BOARD_X_LEN), 0 + BOARD_OFFSET_Y, STAR_SPEED, true);
+
+				return;
+			}
 		}
 	}
 }
 
 void MoveStar()
 {
-	for (int i = 0; i < MAX_STAR; i++)
+	for (int i = 0; i < stars.size(); i++)
 	{
-		if (BOARD_OFFSET_Y + BOARD_Y_LEN < stars[i].GetY())
+		if (BOARD_OFFSET_Y + BOARD_Y_LEN <= stars[i].GetY()) // A star out of board must die
 			stars[i].SetLife(false);
 
 		if (stars[i].GetLife() == true)

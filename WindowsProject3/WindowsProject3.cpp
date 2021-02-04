@@ -104,6 +104,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    HBITMAP MyBitMap, OldBitMap;
+
     switch (message)
     {
     case WM_COMMAND:
@@ -130,11 +132,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
     case WM_PAINT:
-        {
+        {   
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
+            HDC MemDC = CreateCompatibleDC(hdc);
+            MyBitMap = LoadBitmap(hInst, MAKEINTRESOURCE(IDB_BITMAP1));
+            OldBitMap = (HBITMAP)SelectObject(MemDC, MyBitMap);
+            //StretchBlt(hdc, 0, 0, 246, 320, MemDC, 0,0, 123, 160, SRCCOPY);
+            BitBlt(hdc, 0, 0, 123, 160, MemDC, 0, 0, SRCCOPY);
+            SelectObject(MemDC, OldBitMap);
+
+            DeleteObject(MyBitMap);
+            DeleteDC(MemDC);
+
             OnPaint(hdc);
-            // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
+
             EndPaint(hWnd, &ps);
         }
         break;
