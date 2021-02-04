@@ -182,7 +182,7 @@ void Collision(HWND hWnd)
 	for (int i = 0; i < MAX_STAR; i++)
 	{
 		if (stars[i].GetLife())
-		{ // test1xx
+		{ // test1xx rrr
 			if ((avatarX < stars[i].GetX() + STAR_X_LEN) &&
 				(avatarY < stars[i].GetY() + STAR_Y_LEN) &&
 				(avatarX + CHAR_X_LEN > stars[i].GetX()) &&
