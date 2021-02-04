@@ -1,4 +1,4 @@
-#include <iostream>
+ï»¿#include <iostream>
 #include <time.h>
 #include <Windows.h>
 #include <vector>
@@ -114,7 +114,7 @@ void OnPaint(HDC hdc)
 	Rectangle(hdc, BOARD_OFFSET_X, BOARD_OFFSET_Y, BOARD_OFFSET_X + BOARD_X_LEN, BOARD_OFFSET_Y + BOARD_Y_LEN);
 	Ellipse(hdc, avatarX, avatarY, avatarX + CHAR_X_LEN, avatarY + CHAR_Y_LEN);
 
-	wsprintf(ElapsedTime, L"Elapsed Time: %d", sec.count()); // sec.count ¹ÝÈ¯ÇüÀÌ int64 °°Àºµ¥ Ãâ·Â ÀÚ·áÇüÀº ¾î¶»°Ô..? ld, lldµµ ¾ÈµÅ..
+	wsprintf(ElapsedTime, L"Elapsed Time: %d", sec.count()); // sec.count ï¿½ï¿½È¯ï¿½ï¿½ï¿½ï¿½ int64 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Ú·ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½î¶»ï¿½ï¿½..? ld, lldï¿½ï¿½ ï¿½Èµï¿½..
 	TextOut(hdc, BOARD_OFFSET_X + 100, BOARD_OFFSET_Y - 20, ElapsedTime, lstrlen(ElapsedTime));
 
 	for (int i = 0; i < MAX_STAR; i++)
@@ -182,7 +182,7 @@ void Collision(HWND hWnd)
 	for (int i = 0; i < MAX_STAR; i++)
 	{
 		if (stars[i].GetLife())
-		{ // test1dd
+		{ // test1xx
 			if ((avatarX < stars[i].GetX() + STAR_X_LEN) &&
 				(avatarY < stars[i].GetY() + STAR_Y_LEN) &&
 				(avatarX + CHAR_X_LEN > stars[i].GetX()) &&
