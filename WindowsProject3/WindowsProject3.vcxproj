@@ -140,11 +140,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
+    <ClInclude Include="OnGame.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="WindowsProject3.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="OnGame.cpp" />
     <ClCompile Include="WindowsProject3.cpp" />
   </ItemGroup>
   <ItemGroup>
