@@ -183,29 +183,30 @@ void Collision(HWND hWnd)
 	{
 		if (stars[i].GetLife())
 		{ // test1xx rrr
-		{ // test1xx qqq
-			if ((avatarX < stars[i].GetX() + STAR_X_LEN) &&
-				(avatarY < stars[i].GetY() + STAR_Y_LEN) &&
-				(avatarX + CHAR_X_LEN > stars[i].GetX()) &&
-				(avatarY + CHAR_Y_LEN > stars[i].GetY()))
-			{
-				KillTimer(hWnd, 0);
-
-				if (MessageBox(hWnd, L"Game Over\r\n Again?", L"Avoid Box", MB_YESNO | MB_ICONHAND)
-					== IDYES)
+			{ // test1xx qqq
+				if ((avatarX < stars[i].GetX() + STAR_X_LEN) &&
+					(avatarY < stars[i].GetY() + STAR_Y_LEN) &&
+					(avatarX + CHAR_X_LEN > stars[i].GetX()) &&
+					(avatarY + CHAR_Y_LEN > stars[i].GetY()))
 				{
-					ResetGame(hWnd);
-					SendMessageW(hWnd, WM_COMMAND, REGAME, NULL);
+					KillTimer(hWnd, 0);
 
-					return;
-				}
+					if (MessageBox(hWnd, L"Game Over\r\n Again?", L"Avoid Box", MB_YESNO | MB_ICONHAND)
+						== IDYES)
+					{
+						ResetGame(hWnd);
+						SendMessageW(hWnd, WM_COMMAND, REGAME, NULL);
 
-				else
-				{
-					if (avatar)
-						delete avatar;
+						return;
+					}
 
-					exit(0);
+					else
+					{
+						if (avatar)
+							delete avatar;
+
+						exit(0);
+					}
 				}
 			}
 		}
