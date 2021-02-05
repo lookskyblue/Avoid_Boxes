@@ -11,7 +11,7 @@
 #define CHAR_SPEED 10
 #define STAR_X_LEN 5
 #define STAR_Y_LEN 80
-#define MAX_STAR 1
+#define MAX_STAR 50
 #define STAR_SPEED 10
 #define BOARD_OFFSET_X 100
 #define BOARD_OFFSET_Y 100
