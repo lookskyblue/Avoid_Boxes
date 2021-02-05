@@ -12,6 +12,8 @@
 HINSTANCE hInst;                                // 현재 인스턴스입니다.
 WCHAR szTitle[MAX_LOADSTRING];                  // 제목 표시줄 텍스트입니다.
 WCHAR szWindowClass[MAX_LOADSTRING];            // 기본 창 클래스 이름입니다.
+HBITMAP MyBitMap, OldBitMap;
+
 
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -101,11 +103,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    return TRUE;
 }
 
-
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    HBITMAP MyBitMap, OldBitMap;
-
     switch (message)
     {
     case WM_COMMAND:
@@ -131,22 +130,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
         }
         break;
+
     case WM_PAINT:
         {   
             PAINTSTRUCT ps;
+            RECT crt;
+            HDC hMemDC;
             HDC hdc = BeginPaint(hWnd, &ps);
-            HDC MemDC = CreateCompatibleDC(hdc);
-            MyBitMap = LoadBitmap(hInst, MAKEINTRESOURCE(IDB_BITMAP1));
-            OldBitMap = (HBITMAP)SelectObject(MemDC, MyBitMap);
-            //StretchBlt(hdc, 0, 0, 246, 320, MemDC, 0,0, 123, 160, SRCCOPY);
-            BitBlt(hdc, 0, 0, 123, 160, MemDC, 0, 0, SRCCOPY);
-            SelectObject(MemDC, OldBitMap);
+            HBITMAP OldBit;
 
-            DeleteObject(MyBitMap);
-            DeleteDC(MemDC);
+            OnPaint(hWnd, &MyBitMap);
 
-            OnPaint(hdc);
+            GetClientRect(hWnd, &crt);
 
+            hMemDC = CreateCompatibleDC(hdc);
+            OldBit = (HBITMAP)SelectObject(hMemDC, MyBitMap);
+            BitBlt(hdc, 0, 0, crt.right, crt.bottom, hMemDC, 0, 0, SRCCOPY);
+            SelectObject(hMemDC, OldBit);
+
+            DeleteDC(hMemDC);
+            DeleteObject(OldBit);
             EndPaint(hWnd, &ps);
         }
         break;
@@ -160,15 +163,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_KEYDOWN:
     {
         OnKeyDown(hWnd, wParam);
+
         break;
     }
 
     case WM_TIMER:
+    {
         OnTimer(hWnd, wParam);
         break;
+    }
 
     case WM_DESTROY:
         PostQuitMessage(0);
+        KillTimer(hWnd, 0);
         break;
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);

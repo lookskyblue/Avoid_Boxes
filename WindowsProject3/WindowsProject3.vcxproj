@@ -154,7 +154,7 @@
     <ResourceCompile Include="WindowsProject3.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="bitmap2.bmp" />
+    <Image Include="bitmap1.bmp" />
     <Image Include="small.ico" />
     <Image Include="WindowsProject3.ico" />
   </ItemGroup>

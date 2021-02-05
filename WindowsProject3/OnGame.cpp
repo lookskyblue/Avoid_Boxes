@@ -11,7 +11,7 @@
 #define CHAR_SPEED 10
 #define STAR_X_LEN 5
 #define STAR_Y_LEN 80
-#define MAX_STAR 50
+#define MAX_STAR 1
 #define STAR_SPEED 10
 #define BOARD_OFFSET_X 100
 #define BOARD_OFFSET_Y 100
@@ -68,7 +68,7 @@ public:
 		, life(true)
 	{}
 
-	void DownStar(int x) { SetY(x); }
+	void DownStar(int speed) { SetY(speed + GetY()); }
 
 	bool GetLife() { return life; }
 
@@ -85,49 +85,74 @@ Obj* avatar = nullptr;
 std::vector<Star> stars;
 std::chrono::system_clock::time_point StartTime;
 std::chrono::system_clock::time_point EndTime;
-std::chrono::seconds sec;
+std::chrono::seconds elapsed_time;
 TCHAR ElapsedTime[20];
 RECT rt = { BOARD_OFFSET_X, BOARD_OFFSET_Y, BOARD_OFFSET_X + BOARD_X_LEN, BOARD_OFFSET_Y + BOARD_Y_LEN +15 };
 
 void OnCreate(HWND hWnd)
 {
-	avatar = new Character(BOARD_X_LEN / 2 + BOARD_OFFSET_X, BOARD_Y_LEN + BOARD_OFFSET_Y - 20, CHAR_SPEED);
+	if (avatar == nullptr)
+		avatar = new Character(BOARD_X_LEN / 2 + BOARD_OFFSET_X, BOARD_Y_LEN + BOARD_OFFSET_Y - 20, CHAR_SPEED);
+	
 	stars.reserve(MAX_STAR);
 
-	SetTimer(hWnd, 0, 100, NULL);
+	SetTimer(hWnd, 0, 200, NULL);
 	srand(time_t(NULL));
 
 	StartTime = std::chrono::system_clock::now();
 }
 
-void OnPaint(HDC hdc)
+void OnPaint(HWND hWnd, HBITMAP* MyBitMap)
 {
+	HDC hdc, hMemDC;
+	RECT crt;
+	HBITMAP OldBitMap;
+	int avatarX, avatarY;
+
+	hdc = GetDC(hWnd);
+	GetClientRect(hWnd, &crt);
+	
+	if (*MyBitMap == nullptr)
+	{
+		*MyBitMap = CreateCompatibleBitmap(hdc, crt.right, crt.bottom);
+	}
+
+	hMemDC = CreateCompatibleDC(hdc);
+	OldBitMap = (HBITMAP)SelectObject(hMemDC, *MyBitMap);
+	avatarX = avatar->GetX();
+	avatarY = avatar->GetY();
+	FillRect(hMemDC, &crt, GetSysColorBrush(COLOR_WINDOW));
+	Rectangle(hMemDC, BOARD_OFFSET_X, BOARD_OFFSET_Y, BOARD_OFFSET_X + BOARD_X_LEN, BOARD_OFFSET_Y + BOARD_Y_LEN);
+	Ellipse(hMemDC, avatarX, avatarY, avatarX + CHAR_X_LEN, avatarY + CHAR_Y_LEN);
+
 	EndTime = std::chrono::system_clock::now();
-	sec = std::chrono::duration_cast<std::chrono::seconds>(EndTime - StartTime);
+	elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(EndTime - StartTime);
+	wsprintf(ElapsedTime, L"Elapsed Time: %d", elapsed_time.count()); // What's the int64 data type..
+	TextOut(hMemDC, BOARD_OFFSET_X + 100, BOARD_OFFSET_Y + BOARD_Y_LEN, ElapsedTime, lstrlen(ElapsedTime));
 
-	int avatarX = avatar->GetX();
-	int avatarY = avatar->GetY();
-
-	Rectangle(hdc, BOARD_OFFSET_X, BOARD_OFFSET_Y, BOARD_OFFSET_X + BOARD_X_LEN, BOARD_OFFSET_Y + BOARD_Y_LEN);
-	Ellipse(hdc, avatarX, avatarY, avatarX + CHAR_X_LEN, avatarY + CHAR_Y_LEN);
-
-	wsprintf(ElapsedTime, L"Elapsed Time: %d", sec.count()); // What's the int64 data type..
-	TextOut(hdc, BOARD_OFFSET_X + 100, BOARD_OFFSET_Y + BOARD_Y_LEN, ElapsedTime, lstrlen(ElapsedTime));
-
+	int x, y;
 	for (int i = 0; i < stars.size(); i++)
 	{
 		if (stars[i].GetLife())
 		{
-			int x = stars[i].GetX();
-			int y = stars[i].GetY();
+			x = stars[i].GetX();
+			y = stars[i].GetY();
 
-			if (y + STAR_Y_LEN >= BOARD_OFFSET_Y + BOARD_Y_LEN)
-				Rectangle(hdc, x, y, x + STAR_X_LEN, BOARD_OFFSET_Y + BOARD_Y_LEN);
+			if (y <= BOARD_OFFSET_Y && (BOARD_OFFSET_Y <= y + STAR_Y_LEN))
+				Rectangle(hMemDC, x, BOARD_OFFSET_Y, x + STAR_X_LEN, BOARD_OFFSET_Y + (y + STAR_Y_LEN - BOARD_OFFSET_Y));
 
-			else
-				Rectangle(hdc, x, y, x + STAR_X_LEN, y + STAR_Y_LEN);
+			else if (y + STAR_Y_LEN >= BOARD_OFFSET_Y + BOARD_Y_LEN)
+				Rectangle(hMemDC, x, y, x + STAR_X_LEN, BOARD_OFFSET_Y + BOARD_Y_LEN);
+
+			else if (y > BOARD_OFFSET_Y && (y + STAR_Y_LEN < BOARD_OFFSET_Y + BOARD_Y_LEN))
+				Rectangle(hMemDC, x, y, x + STAR_X_LEN, y + STAR_Y_LEN);
 		}
 	}
+
+	SelectObject(hMemDC, OldBitMap);
+	DeleteObject(OldBitMap);
+	DeleteDC(hMemDC);
+	ReleaseDC(hWnd, hdc);
 }
 
 void OnKeyDown(HWND hWnd, WPARAM wParam)
@@ -155,23 +180,26 @@ void OnKeyDown(HWND hWnd, WPARAM wParam)
 		break;
 	}
 
-	InvalidateRect(hWnd, &rt, TRUE);
+	InvalidateRect(hWnd, &rt, FALSE);
+	Collision(hWnd);
 }
 
 void OnTimer(HWND hWnd, WPARAM wParam)
 {
 	MakeStar();
 	MoveStar();
-	InvalidateRect(hWnd, &rt, TRUE);
+	InvalidateRect(hWnd, &rt, FALSE);
 	Collision(hWnd);
 }
 
 void ResetGame(HWND hWnd)
 {
-	if (avatar)
+	if (avatar != nullptr)
+	{
 		delete avatar;
+		avatar = nullptr;
+	}
 
-	KillTimer(hWnd, 0);
 	stars.erase(stars.begin(), stars.end());
 }
 
@@ -184,30 +212,28 @@ void Collision(HWND hWnd)
 	{
 		if (stars[i].GetLife())
 		{
+			if ((avatarX < stars[i].GetX() + STAR_X_LEN) &&
+				(avatarY < stars[i].GetY() + STAR_Y_LEN) &&
+				(avatarX + CHAR_X_LEN > stars[i].GetX()) &&
+				(avatarY + CHAR_Y_LEN > stars[i].GetY()))
 			{
-				if ((avatarX < stars[i].GetX() + STAR_X_LEN) &&
-					(avatarY < stars[i].GetY() + STAR_Y_LEN) &&
-					(avatarX + CHAR_X_LEN > stars[i].GetX()) &&
-					(avatarY + CHAR_Y_LEN > stars[i].GetY()))
+				KillTimer(hWnd, 0);
+
+				if (MessageBox(hWnd, L"Game Over\r\n Again?", L"Avoid Box", MB_YESNO | MB_ICONHAND)
+					== IDYES)
 				{
-					KillTimer(hWnd, 0);
+					ResetGame(hWnd);
+					SendMessageW(hWnd, WM_COMMAND, REGAME, NULL);
 
-					if (MessageBox(hWnd, L"Game Over\r\n Again?", L"Avoid Box", MB_YESNO | MB_ICONHAND)
-						== IDYES)
-					{
-						ResetGame(hWnd);
-						SendMessageW(hWnd, WM_COMMAND, REGAME, NULL);
+					return;
+				}
 
-						return;
-					}
+				else
+				{
+					if (avatar != nullptr)
+						delete avatar;
 
-					else
-					{
-						if (avatar)
-							delete avatar;
-
-						exit(0);
-					}
+					SendMessageW(hWnd, WM_DESTROY, 0, 0);
 				}
 			}
 		}
@@ -218,8 +244,8 @@ void MakeStar()
 {
 	if (stars.size() < MAX_STAR)
 	{
-		stars.push_back(Star(BOARD_OFFSET_X + rand() % (BOARD_X_LEN), 0 + BOARD_OFFSET_Y, STAR_SPEED));
-		
+		stars.push_back(Star(BOARD_OFFSET_X + rand() % (BOARD_X_LEN), -BOARD_OFFSET_Y, STAR_SPEED));
+
 		return;
 	}
 
@@ -229,7 +255,7 @@ void MakeStar()
 		{
 			if (stars[i].GetLife() == false)
 			{
-				stars[i].SetAll(BOARD_OFFSET_X + rand() % (BOARD_X_LEN), 0 + BOARD_OFFSET_Y, STAR_SPEED, true);
+				stars[i].SetAll(BOARD_OFFSET_X + rand() % (BOARD_X_LEN), -BOARD_OFFSET_Y, STAR_SPEED, true);
 
 				return;
 			}
@@ -239,17 +265,21 @@ void MakeStar()
 
 void MoveStar()
 {
+	int speed = 0;
+
 	for (int i = 0; i < stars.size(); i++)
 	{
-		if (BOARD_OFFSET_Y + BOARD_Y_LEN <= stars[i].GetY()) // A star out of board must die
-			stars[i].SetLife(false);
-
 		if (stars[i].GetLife() == true)
 		{
-			int speed = stars[i].GetSpeed();
-			int y = stars[i].GetY();
+			speed = stars[i].GetSpeed();
+			speed += static_cast<int>(elapsed_time.count());
+			stars[i].DownStar(speed);
 
-			stars[i].DownStar(y + speed);
+			if (BOARD_OFFSET_Y + BOARD_Y_LEN <= stars[i].GetY()) // A star out of board must die
+			{
+				stars[i].SetLife(false);
+				continue;
+			}
 		}
 	}
 }

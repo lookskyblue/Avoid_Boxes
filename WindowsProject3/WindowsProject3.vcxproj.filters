@@ -51,7 +51,7 @@
     <Image Include="WindowsProject3.ico">
       <Filter>리소스 파일</Filter>
     </Image>
-    <Image Include="bitmap2.bmp">
+    <Image Include="bitmap1.bmp">
       <Filter>리소스 파일</Filter>
     </Image>
   </ItemGroup>
