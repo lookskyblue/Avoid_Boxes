@@ -2,7 +2,7 @@
 
 void OnCreate(HWND hWnd);
 
-void OnPaint(HDC hdc);
+void OnPaint(HWND hWnd, HBITMAP* MyBitMap);
 
 void OnKeyDown(HWND hWnd, WPARAM wParam);
 
