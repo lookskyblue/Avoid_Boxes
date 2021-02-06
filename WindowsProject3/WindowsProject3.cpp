@@ -163,19 +163,35 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_KEYDOWN:
     {
         OnKeyDown(hWnd, wParam);
-
         break;
     }
 
     case WM_TIMER:
     {
-        OnTimer(hWnd, wParam);
+        switch (wParam)
+        {
+        case 0:
+        {
+            OnTimer(hWnd, wParam);
+            break;
+        }
+
+        case 1:
+        {
+            MakeStar();
+            break;
+        }
+
+        default:
+            break;
+        }
         break;
     }
 
     case WM_DESTROY:
         PostQuitMessage(0);
         KillTimer(hWnd, 0);
+        KillTimer(hWnd, 1);
         break;
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);

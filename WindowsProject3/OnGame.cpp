@@ -11,8 +11,10 @@
 #define CHAR_SPEED 10
 #define STAR_X_LEN 5
 #define STAR_Y_LEN 80
-#define MAX_STAR 50
-#define STAR_SPEED 10
+#define STAR_DOWN_SPEED 1
+#define MAX_STAR 30
+#define FRAME 5
+#define MAKE_STAR_SPEED 100
 #define BOARD_OFFSET_X 100
 #define BOARD_OFFSET_Y 100
 #define BOARD_X_LEN 300
@@ -25,6 +27,8 @@ private:
 	int x;
 	int y;
 	int speed;
+	int live_time;
+
 public:
 	Obj() = default;
 	Obj(int x, int y, int speed)
@@ -45,14 +49,18 @@ public:
 	int GetSpeed() { return speed; }
 	void SetY(int y) { this->y = y; }
 	void SetX(int x) { this->x = x; }
+	void SetLiveTime(int liveTime) { this->live_time = liveTime; }
+	int GetLiveTime() { return live_time; }
 };
 
 class Character : public Obj
 {
 public:
-	Character(int x, int y, int speed)
+	Character(int x, int y, int speed, int live_time)
 		: Obj(x, y, speed)
-	{}
+	{
+		SetLiveTime(live_time);
+	}
 
 	~Character() = default;
 };
@@ -92,11 +100,13 @@ RECT rt = { BOARD_OFFSET_X, BOARD_OFFSET_Y, BOARD_OFFSET_X + BOARD_X_LEN, BOARD_
 void OnCreate(HWND hWnd)
 {
 	if (avatar == nullptr)
-		avatar = new Character(BOARD_X_LEN / 2 + BOARD_OFFSET_X, BOARD_Y_LEN + BOARD_OFFSET_Y - 20, CHAR_SPEED);
+		avatar = new Character(BOARD_X_LEN / 2 + BOARD_OFFSET_X, BOARD_Y_LEN + BOARD_OFFSET_Y - 20, CHAR_SPEED, 0);
 	
 	stars.reserve(MAX_STAR);
 
-	SetTimer(hWnd, 0, 200, NULL);
+	SetTimer(hWnd, 0, FRAME, NULL);
+	SetTimer(hWnd, 1, MAKE_STAR_SPEED, NULL);
+
 	srand(time_t(NULL));
 
 	StartTime = std::chrono::system_clock::now();
@@ -186,7 +196,6 @@ void OnKeyDown(HWND hWnd, WPARAM wParam)
 
 void OnTimer(HWND hWnd, WPARAM wParam)
 {
-	MakeStar();
 	MoveStar();
 	InvalidateRect(hWnd, &rt, FALSE);
 	Collision(hWnd);
@@ -219,7 +228,7 @@ void Collision(HWND hWnd)
 			{
 				KillTimer(hWnd, 0);
 
-				if (MessageBox(hWnd, L"Game Over\r\n Again?", L"Avoid Box", MB_YESNO | MB_ICONHAND)
+				if (MessageBox(hWnd, L"Game Over\r\n Again?", L"Avoid Boxes", MB_YESNO | MB_ICONHAND)
 					== IDYES)
 				{
 					ResetGame(hWnd);
@@ -244,7 +253,7 @@ void MakeStar()
 {
 	if (stars.size() < MAX_STAR)
 	{
-		stars.push_back(Star(BOARD_OFFSET_X + rand() % (BOARD_X_LEN), -BOARD_OFFSET_Y, STAR_SPEED));
+		stars.push_back(Star(BOARD_OFFSET_X + rand() % (BOARD_X_LEN), -BOARD_OFFSET_Y, STAR_DOWN_SPEED));
 
 		return;
 	}
@@ -255,7 +264,7 @@ void MakeStar()
 		{
 			if (stars[i].GetLife() == false)
 			{
-				stars[i].SetAll(BOARD_OFFSET_X + rand() % (BOARD_X_LEN), -BOARD_OFFSET_Y, STAR_SPEED, true);
+				stars[i].SetAll(BOARD_OFFSET_X + rand() % (BOARD_X_LEN), -BOARD_OFFSET_Y, STAR_DOWN_SPEED, true);
 
 				return;
 			}
@@ -272,9 +281,9 @@ void MoveStar()
 		if (stars[i].GetLife() == true)
 		{
 			speed = stars[i].GetSpeed();
-			speed += static_cast<int>(elapsed_time.count());
+			speed += static_cast<int>(elapsed_time.count())/10;
 			stars[i].DownStar(speed);
-
+			
 			if (BOARD_OFFSET_Y + BOARD_Y_LEN <= stars[i].GetY()) // A star out of board must die
 			{
 				stars[i].SetLife(false);
