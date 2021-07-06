@@ -1,4 +1,4 @@
-Avoid Boxeds Game
+Avoid Boxes Game
 =============================
 
 <img width="50%" src="https://user-images.githubusercontent.com/71778475/124381242-5fad6300-dcfc-11eb-9620-f7712a5f28e9.gif"/>
